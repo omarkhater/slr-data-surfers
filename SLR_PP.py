@@ -1,31 +1,20 @@
-import netCDF4
+import pickle as pk
 import pandas as pd
 import numpy as np
 
-def netCDF_2_pd(path):
-    f = netCDF4.Dataset(path)
-    latitude = f.variables['latitude'][:]
-    longitude = f.variables['longitude'][:]
-    time = f.variables['time'][:]  # This is likely in a numeric format representing dates
-
-    # Convert numeric time to datetime
-    # This depends on the 'units' and 'calendar' attributes of the time variable
-    time_units = f.variables['time'].units
-    time_calendar = f.variables['time'].calendar if hasattr(f.variables['time'], 'calendar') else 'standard'
-    time_datetimes = netCDF4.num2date(time, units=time_units, calendar=time_calendar)
-    time_units = f.variables['time'].units
-    try:
-        calendar = f.variables['time'].calendar
-    except AttributeError:  # In case the 'calendar' attribute is missing
-        calendar = 'gregorian'  # or 'standard', choose a default
+def pk_to_pd(path):
+    with open(path, 'rb') as f:
+        data = pk.load(f)
+    time = data['time']
+    latitude = data['latitude']
+    longitude = data['longitude']
+    adt = data['adt']
 
 
-    # Convert your numeric time values to numpy.datetime64 objects
-    converted_times = convert_numeric_time_to_datetime64(time, time_units, calendar)
 
     # Since your dataset likely represents a 2D grid of points over multiple times, 
     # we'll need to repeat the time array to match the number of latitude and longitude points
-    time_repeated = np.repeat(converted_times, latitude.size * longitude.size)
+    time_repeated = np.repeat(time, latitude.size * longitude.size)
 
     # Create a meshgrid for latitude and longitude, then flatten them for the DataFrame
     lon, lat = np.meshgrid(longitude, latitude)
@@ -33,10 +22,9 @@ def netCDF_2_pd(path):
     lat_flat = lat.flatten()
 
     # Repeat latitude and longitude coordinates for each time step
-    lat_repeated = np.tile(lat_flat, len(time_datetimes))
-    lon_repeated = np.tile(lon_flat, len(time_datetimes))
+    lat_repeated = np.tile(lat_flat, len(time))
+    lon_repeated = np.tile(lon_flat, len(time))
 
-    adt = f.variables['adt'][:]
     adt_flat = adt.flatten().data  # Or another method to match DataFrame's structure
 
     # Now combine everything into a DataFrame
@@ -47,7 +35,6 @@ def netCDF_2_pd(path):
         'adt': adt_flat,
     })
     return df
-
 
 def PP_df(df, start_day, end_day, n_days=1):
     """
@@ -79,14 +66,6 @@ def PP_df(df, start_day, end_day, n_days=1):
     sea_df.fillna(0, inplace=True)
     return sea_df
 
-def convert_numeric_time_to_datetime64(time, units, calendar):
-    # Use netCDF4.num2date to convert numeric time values to datetime objects
-    cftime_objs = netCDF4.num2date(time, units=units, calendar=calendar)
-    
-    # Convert cftime objects to numpy.datetime64 objects
-    datetime64_objs = np.array([np.datetime64(date) for date in cftime_objs])
-    
-    return datetime64_objs
 
 def get_state_data(year):
     
@@ -99,3 +78,11 @@ def get_state_data(year):
         print(f"state data for year {year} is not available. Available years only are: \n {list(state_dic.keys())}") 
         return {}
     
+
+
+def load_initial_data(year, slr_data_path = "../data/slr_eastcost_21_23.pkl"):
+    """Loads or computes data necessary for initializing the app or responding to user input."""
+    state_data = get_state_data(year=year)
+    SLR_data = pk_to_pd(slr_data_path)
+    return state_data, SLR_data
+

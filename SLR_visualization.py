@@ -3,7 +3,7 @@ import plotly.express as pex
 import requests
 import pandas as pd
 import numpy as np
-
+from SLR_PP import PP_df
 state_geo = requests.get(
     "https://raw.githubusercontent.com/python-visualization/folium-example-data/main/us_states.json"
 ).json()
@@ -54,6 +54,17 @@ state_geo = requests.get(
 #     ))
     
 #     return fig
+
+def generate_figure(state_data, SLR_data, year, n_days, size_scaling_factor):
+    """Generates the figure based on the provided data and parameters."""
+    SLR_data_pp = PP_df(SLR_data, 
+                        start_day=f'{year}-01-01', 
+                        end_day=f'{year}-01-15', 
+                        n_days=n_days)
+    fig = migrationSLRMap(state_data, 
+                          SLR_data_pp, 
+                          size_scaling_factor=size_scaling_factor)
+    return fig
 
 def migrationSLRMap(state_data: dict, sea_df: pd.DataFrame, size_scaling_factor=10):
     state_geo = requests.get(

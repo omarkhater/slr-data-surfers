@@ -1,29 +1,12 @@
 import streamlit as st
 import pandas as pd
-from SLR_PP import get_state_data, PP_df, netCDF_2_pd
-from SLR_visualization import migrationSLRMap
+from SLR_PP import load_initial_data
+from SLR_visualization import generate_figure
 from datetime import datetime
-
-def load_initial_data(year):
-    """Loads or computes data necessary for initializing the app or responding to user input."""
-    state_data = get_state_data(year=year)
-    slr_data_path = "C:/Users/Madeline/Downloads/c3s_obs-sl_glo_phy-ssh_my_twosat-l4-duacs-0.25deg_P1D_multi-vars_101.88W-49.12W_16.12N-51.88N_2021-01-01-2023-06-07.nc"
-    SLR_data = netCDF_2_pd(slr_data_path)
-    return state_data, SLR_data
-
-def generate_figure(state_data, SLR_data, year, n_days, size_scaling_factor):
-    """Generates the figure based on the provided data and parameters."""
-    SLR_data_pp = PP_df(SLR_data, 
-                        start_day=f'{year}-01-01', 
-                        end_day=f'{year}-01-15', 
-                        n_days=n_days)
-    fig = migrationSLRMap(state_data, 
-                          SLR_data_pp, 
-                          size_scaling_factor=size_scaling_factor)
-    return fig
 
 # Load initial data
 initial_year = 2021
+slr_data_path= "../data/slr_eastcost_21_23.pkl"
 state_data_initial, SLR_data_initial = load_initial_data(initial_year)
 initial_fig = generate_figure(state_data_initial, SLR_data_initial, initial_year, 1, 10)
 
