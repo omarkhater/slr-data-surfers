@@ -27,7 +27,7 @@ initial_year = 2021
 state_data_initial, SLR_data_initial = load_initial_data(initial_year)
 initial_fig = generate_figure(state_data_initial, SLR_data_initial, initial_year, 1, 10)
 
-st.title("SLR Migration Visualization")
+st.title("Visualize US Internal Migration Patters Alongside Sea Level Rise")
 
 start_date = st.date_input("Start Date:", datetime(2021, 1, 1), min_value=datetime(2021, 1, 1), max_value=datetime.today())
 end_date = st.date_input("End Date:", datetime(2021, 12, 31), min_value=datetime(1995, 1, 1), max_value=datetime.today())
