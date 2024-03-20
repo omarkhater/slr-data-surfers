@@ -3,16 +3,21 @@ import pandas as pd
 import numpy as np
 import boto3
 
-def load_initial_data(year, mode = 'east_coast'):
+def load_initial_data(year, 
+                      start_day = '2021-01-01',
+                      end_day = '2021-12-31',
+                      n_days = 30,
+                      mode = 'east_coast'):
     state_data = get_state_data(year=year)
     SLR_data = dic_to_pd(mode = mode, year = year)
-    return state_data, SLR_data
+    df_for_visualization = PP_df(SLR_data, start_day, end_day, n_days)
+    return state_data, df_for_visualization
 
 def load_pk_s3(bucket_name = 'competitions23', mode = 'east_coast'):
     if mode == 'east_coast':
         key = 'slr/slr_eastcost_21_23.pkl'
     elif mode == 'all_us':
-        key =  'slr_all_us_11_21.pkl'
+        key =  'slr/slr_all_us_11_21.pkl'
     s3client = boto3.client('s3')
     response = s3client.get_object(Bucket=bucket_name, 
                                    Key=key)
@@ -20,8 +25,16 @@ def load_pk_s3(bucket_name = 'competitions23', mode = 'east_coast'):
     data = pk.loads(body)
     return data
 
+def load_pk_local(mode = 'east_coast'):
+    if mode == 'east_coast':
+        key = '../data/slr_eastcost_21_23.pkl'
+    elif mode == 'all_us':
+        key =  '../data/slr_all_us_11_21.pkl'
+    with open(key, 'rb') as f:
+        data = pk.load(f)
+    return data
 def dic_to_pd(year, mode = 'east_coast'):
-    data = load_pk_s3(mode = mode)
+    data = load_pk_local(mode = mode)
     time = data['time']
     latitude = data['latitude']
     longitude = data['longitude']
@@ -57,6 +70,9 @@ def dic_to_pd(year, mode = 'east_coast'):
     
     yearly_df = df[(df['Time'] >= start_date) & (df['Time'] <= end_date)]
 
+    # Reduce the resolution 
+
+    print(f"Number of entries in {year} is {len(yearly_df)}")
     return yearly_df
 
 def PP_df(df, start_day, end_day, n_days=1):
