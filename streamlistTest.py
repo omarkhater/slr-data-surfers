@@ -6,7 +6,7 @@ from datetime import datetime
 
 # Load initial data
 initial_year = 2021
-slr_data_path= "../data/slr_eastcost_21_23.pkl"
+# slr_data_path= "../data/slr_eastcost_21_23.pkl"
 state_data_initial, SLR_data_initial = load_initial_data(initial_year)
 initial_fig = generate_figure(state_data_initial, SLR_data_initial, initial_year, 1, 10)
 

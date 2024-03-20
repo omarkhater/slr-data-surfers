@@ -1,17 +1,31 @@
 import pickle as pk
 import pandas as pd
 import numpy as np
+import boto3
 
-def pk_to_pd(path):
-    with open(path, 'rb') as f:
-        data = pk.load(f)
+def load_initial_data(year, mode = 'east_coast'):
+    state_data = get_state_data(year=year)
+    SLR_data = dic_to_pd(mode = mode)
+    return state_data, SLR_data
+
+def load_pk_s3(bucket_name = 'competitions23', mode = 'east_coast'):
+    if mode == 'east_coast':
+        key = 'slr/slr_eastcost_21_23.pkl'
+    elif mode == 'all_us':
+        key =  'slr_all_us_11_21.pkl'
+    s3client = boto3.client('s3')
+    response = s3client.get_object(Bucket=bucket_name, 
+                                   Key=key)
+    body = response['Body'].read()
+    data = pk.loads(body)
+    return data
+
+def dic_to_pd(year = year, mode = 'east_coast'):
+    data = load_pk_s3(mode = mode)
     time = data['time']
     latitude = data['latitude']
     longitude = data['longitude']
     adt = data['adt']
-
-
-
     # Since your dataset likely represents a 2D grid of points over multiple times, 
     # we'll need to repeat the time array to match the number of latitude and longitude points
     time_repeated = np.repeat(time, latitude.size * longitude.size)
@@ -34,6 +48,8 @@ def pk_to_pd(path):
         'Longitude': lon_repeated, 
         'adt': adt_flat,
     })
+    # Select data per given year
+
     return df
 
 def PP_df(df, start_day, end_day, n_days=1):
@@ -80,9 +96,5 @@ def get_state_data(year):
     
 
 
-def load_initial_data(year, slr_data_path = "../data/slr_eastcost_21_23.pkl"):
-    """Loads or computes data necessary for initializing the app or responding to user input."""
-    state_data = get_state_data(year=year)
-    SLR_data = pk_to_pd(slr_data_path)
-    return state_data, SLR_data
+
 
