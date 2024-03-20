@@ -5,7 +5,7 @@ import boto3
 
 def load_initial_data(year, mode = 'east_coast'):
     state_data = get_state_data(year=year)
-    SLR_data = dic_to_pd(mode = mode)
+    SLR_data = dic_to_pd(mode = mode, year = year)
     return state_data, SLR_data
 
 def load_pk_s3(bucket_name = 'competitions23', mode = 'east_coast'):
@@ -20,7 +20,7 @@ def load_pk_s3(bucket_name = 'competitions23', mode = 'east_coast'):
     data = pk.loads(body)
     return data
 
-def dic_to_pd(year = year, mode = 'east_coast'):
+def dic_to_pd(year, mode = 'east_coast'):
     data = load_pk_s3(mode = mode)
     time = data['time']
     latitude = data['latitude']
@@ -48,9 +48,16 @@ def dic_to_pd(year = year, mode = 'east_coast'):
         'Longitude': lon_repeated, 
         'adt': adt_flat,
     })
-    # Select data per given year
+    # Ensure 'Time' is in datetime format (if not already)
+    df['Time'] = pd.to_datetime(df['Time'])
 
-    return df
+    # Filter DataFrame for entries within the specified year
+    start_date = pd.to_datetime(f'{year}-01-01')
+    end_date = pd.to_datetime(f'{year}-12-31')
+    
+    yearly_df = df[(df['Time'] >= start_date) & (df['Time'] <= end_date)]
+
+    return yearly_df
 
 def PP_df(df, start_day, end_day, n_days=1):
     """
